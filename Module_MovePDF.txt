@@ -1,0 +1,110 @@
+Option Compare Database
+Option Explicit
+
+Public switchy As Long
+
+Public Sub FindDBTables(strInitialPath As String)
+  
+    Dim colFiles As New Collection
+    Dim strSQL As String, strFile As String, strPath As String
+    
+    Dim fso As FileSystemObject, aFile As file
+    Dim vFile As Variant
+
+    Set fso = New FileSystemObject
+    
+    RecursiveDir colFiles, strInitialPath, "*.PDF", True
+
+    switchy = 0
+
+    For Each vFile In colFiles
+    
+    If switchy = 1 Then Exit Sub
+      
+    Dim filename As String
+    Dim FolderName As String
+    Dim filecounter As String
+    filename = fso.GetFileName(vFile)
+    FolderName = fso.GetParentFolderName(vFile) & "\"
+    
+    Forms!RJ!Text13 = FolderName
+    Forms!RJ!Text15 = filename
+    
+    filecounter = Forms!RJ!Text13
+    
+    Dim file As String, countOf As Long
+    file = Dir$(filecounter & "*.pdf")
+    Do Until file = ""
+    countOf = (countOf + 1)
+    file = Dir$()
+    Loop
+    
+    If countOf > 1 Then
+    Forms!RJ!deleteswitch = "0"
+    Else
+    Forms!RJ!deleteswitch = "1"
+    End If
+    
+    switchy = 1
+
+    Next vFile
+    
+    Set aFile = Nothing
+    Set fso = Nothing
+    
+End Sub
+
+Public Function RecursiveDir(colFiles As Collection, _
+                             strFolder As String, _
+                             strFileSpec As String, _
+                             bIncludeSubfolders As Boolean)
+                              
+    Dim strTemp As String
+    Dim vFolderName As Variant
+    Dim colFolders As New Collection
+
+    strFolder = TrailingSlash(strFolder)
+    strTemp = Dir(strFolder & strFileSpec)
+    Do While strTemp <> vbNullString
+        colFiles.Add strFolder & strTemp
+        strTemp = Dir
+    Loop
+
+    If bIncludeSubfolders Then
+        strTemp = Dir(strFolder, vbDirectory)
+        Do While strTemp <> vbNullString
+            If (strTemp <> ".") And (strTemp <> "..") Then
+                If Len(strFolder & strTemp) < 256 Then
+                    If (GetAttr(strFolder & strTemp) And vbDirectory) <> 0 Then
+                        colFolders.Add strTemp
+                    End If
+                End If
+            End If
+            strTemp = Dir
+        Loop
+
+        For Each vFolderName In colFolders
+        
+        If vFolderName <> "PENDING" Then
+                          
+            Call RecursiveDir(colFiles, strFolder & vFolderName, strFileSpec, True)
+        
+        End If
+        
+        Next vFolderName
+        
+    End If
+
+End Function
+
+Public Function TrailingSlash(strFolder As String) As String
+    
+    If Len(strFolder) > 0 Then
+        If Right(strFolder, 1) = "\" Then
+            TrailingSlash = strFolder
+        Else
+            TrailingSlash = strFolder & "\"
+        End If
+    End If
+
+End Function
